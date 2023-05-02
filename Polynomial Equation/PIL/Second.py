@@ -17,9 +17,12 @@ class Equation:
     def next(self, Coords):
         return self.Equation(Coords)
 
-def NextCoord(queue: Queue, coords: np.array, equation: Equation, M):
+def NextCoord(queue: Queue, coords: np.array, equation: Equation, M, DLR, URR, W, H):
+    Diff = np.array([W, H]) / (URR - DLR)
+    
     for i in range(M):
-        queue.put(coords)
+        current = ((coords - DLR) * Diff).astype("ushort")
+        queue.put(current)
         coords = equation.next(coords)
     print(int(time.time()), ' - fin First')
 
@@ -54,23 +57,24 @@ if __name__ == "__main__":
     test = np.array([0, 0])
     Eq = Equation()
     RealCoord = Queue()
-    ScreenCoord = Queue()
-    CalculateCoords = Process(target=NextCoord, args=(RealCoord, test, Eq, Nbr))
-    ConvertCoords = Process(target=Converter, args=(RealCoord, ScreenCoord, DownLeftReal, UpRightReal, Width, Height, Nbr))
+    # ScreenCoord = Queue()
+    CalculateCoords = Process(target=NextCoord, args=(RealCoord, test, Eq, Nbr, DownLeftReal, UpRightReal, Width, Height))
+    # ConvertCoords = Process(target=Converter, args=(RealCoord, ScreenCoord, DownLeftReal, UpRightReal, Width, Height, Nbr))
     print(int(time.time()), ' - deb All')
     CalculateCoords.start()
-    ConvertCoords.start()
+    # ConvertCoords.start()
     
-    precedent = [0, 0]
+    precedent = RealCoord.get()
     
-    for i in range(Nbr):
-        current = ScreenCoord.get()
+    for i in range(Nbr-1):
+        current = RealCoord.get()
         draw.line((*precedent, *current), fill="blue")
         precedent = current
         if not i%100 and Gif:
             im.save(f'Gif/{i//100}.png', 'PNG', quality=100)
+    print(int(time.time()), ' - fin Save')
     im.save(f'{Nbr}.png', 'PNG', quality=100)
     
     CalculateCoords.kill()
-    ConvertCoords.kill()
+    # ConvertCoords.kill()
     print(int(time.time()), ' - fin All')

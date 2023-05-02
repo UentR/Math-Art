@@ -17,19 +17,28 @@ class Equation:
     def next(self, Coords):
         return self.Equation(Coords)
 
-def NextCoord(queue: Queue, coords: np.array, equation: Equation):
+def NextCoord(queue: Queue, coords: np.array, equation: Equation, DLR, URR, W, H):
+    Diff = np.array([W, H]) / (URR - DLR)
+    
     while True:
-        queue.put(coords)
-        coords = equation.next(coords)
+        for i in range(5000):
+            current = ((coords - DLR) * Diff).astype("ushort")
+            queue.put(current)
+            coords = equation.next(coords)
+        while queue.qsize() > 500:
+            time.sleep(0.1)
 
 
 def Converter(Real: Queue, Screen: Queue, DLR, URR, W, H):
     Diff = np.array([W, H]) / (URR - DLR)
     
     while True:
-        current = Real.get()
-        current = ((current - DLR) * Diff).astype("ushort")
-        Screen.put(current)
+        for i in range(5000):
+            current = Real.get()
+            current = ((current - DLR) * Diff).astype("ushort")
+            Screen.put(current)
+        while Screen.qsize() > 500:
+            time.sleep(0.1)
     
     
 if __name__ == "__main__":
@@ -40,7 +49,7 @@ if __name__ == "__main__":
     
     Nbr = 10000
     
-    DownLeftReal, UpRightReal = np.array([-1, 2]), np.array([2, -1])
+    DownLeftReal, UpRightReal = np.array([-1, 2]), np.array([1.5, -1])
     
     radius = 6
     radius = np.array([radius, radius])
@@ -48,11 +57,11 @@ if __name__ == "__main__":
     test = np.array([0, 0])
     Eq = Equation()
     RealCoord = Queue()
-    ScreenCoord = Queue()
-    CalculateCoords = Process(target=NextCoord, args=(RealCoord, test, Eq,))
-    ConvertCoords = Process(target=Converter, args=(RealCoord, ScreenCoord, DownLeftReal, UpRightReal, Width, Height))
+    # ScreenCoord = Queue()
+    CalculateCoords = Process(target=NextCoord, args=(RealCoord, test, Eq, DownLeftReal, UpRightReal, Width, Height))
+    # ConvertCoords = Process(target=Converter, args=(RealCoord, ScreenCoord, DownLeftReal, UpRightReal, Width, Height))
     CalculateCoords.start()
-    ConvertCoords.start()
+    # ConvertCoords.start()
     
     t = 0
     while True:
@@ -62,10 +71,10 @@ if __name__ == "__main__":
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             pygame.display.flip()
-            pygame.image.save(screen, f"Images/{time.time():.0f}.png")
+            pygame.image.save(screen, f"Images/{t} - {Width}*{Height} - {time.time():.0f}.png")
             break
         
-        current = ScreenCoord.get()
+        current = RealCoord.get()
         pygame.draw.circle(screen, (255, 255, 255), current, 2)
         t += 1
         if t%100 == 0:
@@ -74,4 +83,4 @@ if __name__ == "__main__":
     pygame.quit()
 
     CalculateCoords.kill()
-    ConvertCoords.kill()
+    # ConvertCoords.kill()
