@@ -4,14 +4,21 @@ import time
 from PIL import Image, ImageDraw
 from random import choice
 
-def NextCoord(queue: Queue, Points, M, DLR, URR, W, H, R):
+def NextCoord(queue: Queue, Points, L, M, DLR, URR, W, H, R):
     Diff = np.array([W, H]) / (URR - DLR)
-    Possibility = [0, 1, 2, 3]
+    Possibility = list(range(L))
     Second = choice(Possibility[1:])
     Lasts = np.array([0, Second])
     coords = (Points[Lasts[0]] + Points[Lasts[1]])/2
     
-    Same = [2, 3, 0, 1]
+    Same = np.ndarray((L, L-3))
+    
+    for i in range(L):
+        I = list(range(L))
+        I.remove(i); I.remove((i+1)%L); I.remove((i-1+L)%L)
+        Same[i] = I
+    
+    # Same = [2, 3, 0, 1]
     
     for i in range(M//1000):
         for j in range(1000):
@@ -20,7 +27,7 @@ def NextCoord(queue: Queue, Points, M, DLR, URR, W, H, R):
             queue.put(current)
             
             if Lasts[0] == Lasts[1]:
-                Second = Same[Lasts[0]]
+                Second = int(np.random.choice(Same[Lasts[0]]))
             else:
                 Second = choice(Possibility)
             
@@ -31,7 +38,8 @@ def NextCoord(queue: Queue, Points, M, DLR, URR, W, H, R):
             else:
                 Lasts[0] = Second
         while queue.qsize() > 500:
-            print(i/10)
+            print(i*100000/M)
+            # time.sleep(0.01)
   
     print(int(time.time()), ' - fin First')
 
@@ -40,18 +48,28 @@ def NextCoord(queue: Queue, Points, M, DLR, URR, W, H, R):
 if __name__ == "__main__":
     Gif = 0
     
-    S = 2048*2
+    S = 2048*6
     Width, Height = [S] * 2
     
     im = Image.new('RGB', (Width, Height), (0,0,0))
     draw = ImageDraw.Draw(im)
     
-    Nbr = 1_000_0
+    Nbr = 2 * 10 ** 5
     DownLeftReal, UpRightReal = np.array([0, 0]), np.array([1, 1])
-    Points = np.array([np.array([.5, .25]), np.array([.75, .5]), np.array([.5, .75]), np.array([.25, .5])])
         
-    radius = S//1024 + 1
+    radius = S//1024 - 1
+    radius = 3.5
     radius = np.array([radius, radius])
+    
+    NbrPoints = 8
+    Points = np.ndarray((NbrPoints, 2))
+    Points[0] = np.array([0.5, 0.75])
+    Origin = np.array([0.5, 0.5])
+    Theta = -2*np.pi/NbrPoints
+    Coeffs = np.matrix([[np.cos(Theta), -np.sin(Theta)], [np.sin(Theta), np.cos(Theta)]])
+    
+    for i in range(1, NbrPoints):
+        Points[i] = np.dot(Coeffs, Points[i-1]-Origin)+Origin
     
     for i in Points:
         i = ((i - DownLeftReal) / (UpRightReal - DownLeftReal) * np.array([Width, Height]))
@@ -59,8 +77,8 @@ if __name__ == "__main__":
     
     test = np.array([0, 0])
     RealCoord = Queue()
-    CalculateCoords = Process(target=NextCoord, args=(RealCoord, Points, Nbr, DownLeftReal, UpRightReal, Width, Height, radius))
-    print(int(time.time()), ' - deb All')
+    CalculateCoords = Process(target=NextCoord, args=(RealCoord, Points, NbrPoints, Nbr, DownLeftReal, UpRightReal, Width, Height, radius))
+    print((U:=int(time.time())), ' - deb All')
     CalculateCoords.start()
     
     for i in range(Nbr):
@@ -69,7 +87,7 @@ if __name__ == "__main__":
         if not i%100 and Gif:
             im.save(f'Gif/{i//100}.png', 'PNG', quality=100)
     print(int(time.time()), ' - fin Creation')
-    im.save(f'Images/{Nbr} - {Width}*{Height} - {time.time():.0f}.png', 'PNG', quality=100)
-    
+    im.save(f'Images/{f"{NbrPoints}/" if NbrPoints<=6 else f"6+/{NbrPoints}"}{Nbr} - {Width}*{Height} - {time.time():.0f}.png', 'PNG', quality=100)
+    im.close()
     CalculateCoords.kill()
     print(int(time.time()), ' - fin All')
