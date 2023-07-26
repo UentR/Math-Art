@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 def F(k):
     X = np.sin(np.pi*k/20000)**12 * (.5*np.cos(31*np.pi*k/10000)**16 * np.sin(6*np.pi*k/10000) + 1/6*np.sin(31*np.pi*k/10000)**20) + 3*k/20000 + np.cos(31*np.pi*k/10000)**6 * np.sin(np.pi/2*((k-10000)/10000)**7-np.pi/5)
     
-    Y = -9/4*np.cos(31*np.pi*k/10000)**6*np.cos(np.pi/2*((k-10000)/10000)**7-np.pi/5)*(2/3+np.sin(np.pi*k/20000)*np.sin(3*np.pi*k/20000)**6) + 3/4*np.cos(3*np.pi*(k-10000)/10000)**10*np.cos(9*np.pi*(k-10000)/10000)**10*np.cos(36*np.pi*(k-10000)/10000)**14+.7*((k-10000)/10000)**2
+    Y = -9/4*np.cos(31*np.pi*k/10000)**6 * np.cos(np.pi/2*(((k-10000)/10000)**7)-np.pi/5)*((2/3)+(np.sin(np.pi*k/20000)*np.sin(3*np.pi*k/20000))**6) + 3/4*np.cos(3*np.pi*(k-10000)/10000)**10*np.cos(9*np.pi*(k-10000)/10000)**10*np.cos(36*np.pi*(k-10000)/10000)**14+.7*((k-10000)/10000)**2
     
     R = np.sin(np.pi*k/20000)**10*.25*np.cos(31*np.pi/10000+25*np.pi/32)**20+.05*np.cos(31*np.pi*k/10000)**2+1/30*(3/2-np.cos(62*np.pi*k/10000)**2)
     
@@ -18,7 +18,7 @@ def NextCoord(queue: Queue, equation, M, DLR, URR, W, H, R=1):
     Step = np.double(M/9830)
     while k<=9830:
         Coords, Rad = equation(k)
-        Rad /= 4
+        Rad /= 2
         Coords = [Coords-Rad, Coords+Rad]
         current = ((Coords - DLR) * Diff)
         
@@ -29,6 +29,23 @@ def NextCoord(queue: Queue, equation, M, DLR, URR, W, H, R=1):
     
 
 if __name__ == "__main__":
+    # import matplotlib.pyplot as plt
+    # from matplotlib import cm, use, colors
+    # use('Qt5Agg')
+    # fig, ax = plt.subplots()
+    # Xs, Ys, Rs = np.ndarray(9830), np.ndarray(9830), np.ndarray(9830)
+    # for i in range(9830):
+    #     K = np.ushort(i+1)
+    #     [Xs[i], Ys[i]], Rs[i] = F(K)
+    
+    # Points = list(range(9830))
+    
+    # ax.plot(Points, Xs, label="Xs")
+    # ax.plot(Points, Ys, label="Ys")
+    # ax.plot(Points, Rs, label="Rs")
+    
+    # plt.show()
+    # print(5/0)
     Gif = 0
     
     S = 2048
